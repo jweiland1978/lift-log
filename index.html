@@ -137,10 +137,10 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:linear-gradi
 
 /* nav */
 nav{display:flex;justify-content:space-around;background:rgba(15,18,23,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px 0 calc(6px + env(safe-area-inset-bottom));position:relative;z-index:30}
-nav button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:700;color:var(--muted);padding:6px 8px;min-width:72px;min-height:52px;position:relative}
+nav button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:700;color:var(--muted);padding:6px 8px;min-width:60px;flex:1;max-width:96px;min-height:52px;position:relative}
 nav button svg{width:25px;height:25px}
 nav button.on{color:var(--accent)}
-nav .live{position:absolute;top:4px;right:18px;width:9px;height:9px;border-radius:50%;background:var(--good);display:none;box-shadow:0 0 0 3px rgba(52,211,153,.25)}
+nav .live{position:absolute;top:4px;right:calc(50% - 20px);width:9px;height:9px;border-radius:50%;background:var(--good);display:none;box-shadow:0 0 0 3px rgba(52,211,153,.25)}
 nav .live.on{display:block}
 
 /* modal sheet */
@@ -193,6 +193,53 @@ canvas.chart{width:100%;height:220px;display:block;background:var(--bg);border-r
 .stepper{display:flex;align-items:center;gap:8px}
 .stepper button{width:48px;height:48px;border-radius:12px;background:var(--surface2);font-size:20px;font-weight:800}
 .stepper output{min-width:70px;text-align:center;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* habits */
+.hsum{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;min-height:64px}
+.hsum-ring{--p:0;width:48px;height:48px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--good) calc(var(--p)*1%),var(--surface2) 0)}
+.hsum-ring span{width:38px;height:38px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:12px;font-weight:800}
+.hbar{height:12px;border-radius:999px;background:var(--surface2);overflow:hidden}
+.hbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--good),#6EE7B7);transition:width .3s}
+.hday{display:flex;align-items:center;gap:10px;margin:2px 0 8px}
+.hweek{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:12px}
+.hweek button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 0;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:11px;color:var(--muted);font-weight:700;min-height:58px}
+.hweek button b{font-size:16px;color:var(--ink)}
+.hweek button small{font-size:10.5px}
+.hweek button.on{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,107,61,.35)}
+.hweek button.full small{color:var(--good)}
+.hweek button.fut{opacity:.35}
+.hrow{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:6px 6px 6px 8px;margin-bottom:8px;min-height:70px;transition:background .15s,border-color .15s}
+.hrow.done{background:var(--good-soft);border-color:rgba(52,211,153,.45)}
+.hrow.unsched{opacity:.7}
+.hmain{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;min-height:58px;padding:2px 4px}
+.hemo{width:44px;height:44px;border-radius:12px;background:var(--surface2);display:grid;place-items:center;font-size:24px;flex:none}
+.hname{display:block;font-weight:700;font-size:16px;line-height:1.2}
+.hmeta{display:block;font-size:12.5px;color:var(--muted);margin-top:3px}
+.hrow.done .hname{color:var(--good)}
+.hchk{width:56px;height:56px;border-radius:50%;border:2px solid var(--line);background:var(--bg);font-size:24px;color:transparent;flex:none;display:grid;place-items:center}
+.hrow.done .hchk{background:var(--good);border-color:var(--good);color:#06281B}
+.hcount{display:flex;gap:6px;flex:none}
+.hcount button{width:50px;height:56px;border-radius:14px;background:var(--surface2);border:1px solid var(--line);font-size:24px;font-weight:800}
+.hcount .hplus{background:var(--bg);border:2px solid var(--line)}
+.hrow.done .hcount .hplus{background:var(--good);border-color:var(--good);color:#06281B}
+.hinfo{width:34px;height:56px;border-radius:12px;color:var(--muted);font-size:24px;flex:none}
+.calh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cw{text-align:center;font-size:11px;font-weight:800;color:var(--muted);padding:2px 0}
+.cc{aspect-ratio:1;border-radius:10px;display:grid;place-items:center;font-size:13px;font-weight:700;background:var(--surface2);color:var(--muted);border:1.5px solid transparent;min-height:40px}
+.cc.blank{background:transparent}
+.cc.off{background:#1A1E25;opacity:.6}
+.cc.done{background:var(--good);color:#06281B;opacity:1}
+.cc.part{background:rgba(52,211,153,.35);color:var(--ink);opacity:1}
+.cc.miss{border-color:rgba(248,113,113,.7);color:var(--bad)}
+.cc.fut{opacity:.3}
+.cc.today{box-shadow:0 0 0 2px var(--ink)}
+.epick{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:8px}
+.epick button{height:42px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:20px}
+.epick button.on{border-color:var(--accent);background:rgba(255,107,61,.15)}
+.list-item.mh{gap:6px;padding:8px}
+.mhb{width:40px;height:44px;border-radius:10px;background:var(--surface2);font-size:16px;font-weight:800;flex:none}
+.mhb:disabled{opacity:.25}
 @media (min-width:600px){ body{overflow:auto} }
 </style>
 </head>
@@ -207,12 +254,14 @@ canvas.chart{width:100%;height:220px;display:block;background:var(--bg);border-r
   </header>
   <main>
     <section class="view active" id="view-today"><div class="scroll" id="todayScroll"><div id="todayBody"></div></div></section>
+    <section class="view" id="view-habits"><div class="scroll"><div id="habitsBody"></div></div></section>
     <section class="view" id="view-history"><div class="scroll"><div id="historyBody"></div></div></section>
     <section class="view" id="view-progress"><div class="scroll"><div id="progressBody"></div></div></section>
     <section class="view" id="view-me"><div class="scroll"><div id="meBody"></div></div></section>
   </main>
   <nav>
     <button data-view="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9v6M6.5 7v10M17.5 7v10M21 9v6M6.5 12h11"/></svg>Today<span class="live" id="liveDot"></span></button>
+    <button data-view="habits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8 12.5l2.8 2.8L16.5 9"/></svg>Habits</button>
     <button data-view="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M7.5 14h3M13.5 14h3M7.5 17.5h3"/></svg>History</button>
     <button data-view="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 16l4.5-5 3.5 3 6-7"/><path d="M15 7h4v4"/></svg>Progress</button>
     <button data-view="me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4 4.3-6 8-6s6.8 2 8 6"/></svg>Me</button>
@@ -334,7 +383,7 @@ const KEY = "liftlog.v1";
 const DEFAULT = () => ({
   v: 1,
   settings: {unit: "lb", rest: 90, sound: true, vibrate: true, wake: true, days: [2, 4, 5], lastBackup: null},
-  workouts: [], active: null, templates: [], body: [], customEx: [], restEnd: null, restTotal: 0
+  workouts: [], active: null, templates: [], body: [], customEx: [], restEnd: null, restTotal: 0, habits: null, habitLog: {}
 });
 let S;
 function load(){
@@ -342,6 +391,7 @@ function load(){
   catch (e) { S = DEFAULT(); }
   S.settings = Object.assign(DEFAULT().settings, S.settings || {});
   ["workouts","templates","body","customEx"].forEach(k => { if (!Array.isArray(S[k])) S[k] = []; });
+  fixHabits();
 }
 let saveT;
 function save(){
@@ -1071,6 +1121,7 @@ function renderToday(){
     <h2 class="title">${doneToday ? "Nice work today 💪" : isTrain ? "Lifting day 🏋️" : "Rest day"}</h2>
     <p class="sub">${doneToday ? "Today's session is logged. Check Progress to see how it stacks up." : isTrain ? "Paste what your coach sent and start logging." : "Recover well. You can still log a session any time."}</p>
     ${weekCardHTML()}
+    ${habitsSummaryHTML()}
     <div class="stack" style="margin-bottom:14px">
       <button class="btn primary" id="tPaste">📋 Paste coach's workout</button>
       <button class="btn" id="tEmpty">＋ Start empty workout</button>
@@ -1079,6 +1130,7 @@ function renderToday(){
     ${recent.length ? `<div class="card"><h3>Repeat a recent workout</h3>${recent.map(w => `<button class="list-item" data-rep="${w.id}"><div class="grow"><div class="nm">${esc(w.title)}</div><div class="ds">${fmtDate(w.date)} · ${w.ex.length} exercises · ${workoutSets(w)} sets</div></div><span class="tag">Repeat</span></button>`).join("")}</div>` : ""}
     ${!S.workouts.length ? `<div class="card"><h3>How it works</h3><p class="small muted" style="line-height:1.55">1. Paste your coach's workout (or add exercises).<br>2. Tap ✓ after each set. The rest timer starts on its own.<br>3. Next time, you'll see what you lifted last time and get a 🏆 when you beat it.<br><br>Your data stays on this phone. Back it up from <b>Me → Export</b> now and then.</p></div>` : ""}`;
   $("#tPaste").onclick = () => pasteSheet(null);
+  if ($("#hSum")) $("#hSum").onclick = () => showView("habits");
   $("#tEmpty").onclick = () => startWorkout(newWorkout()).then(ok => ok && addExerciseSheet(ED.live));
   body.onclick = e => {
     const t = e.target.closest("[data-tpl]"); if (t) return startFromTemplate(S.templates.find(x => x.id === t.dataset.tpl));
@@ -1308,7 +1360,7 @@ function renderMe(){
       <p class="small muted" style="margin-bottom:10px;line-height:1.45">Everything is stored only on this phone. Export a backup file now and then (save it to Files or iCloud Drive) so you never lose your history.<br><b style="color:${lb == null || lb > 30 ? "var(--warn)" : "var(--good)"}">Last backup: ${lb == null ? "never" : lb === 0 ? "today" : `${lb} day${lb > 1 ? "s" : ""} ago`}</b></p>
       <div class="stack"><button class="btn primary" id="expBtn">⬇️ Export backup (.json)</button>
       <button class="btn" id="impBtn">⬆️ Import backup</button><input type="file" id="impFile" accept="application/json,.json" hidden></div></div>
-    <div class="card"><h3>Data</h3><p class="small muted" style="margin-bottom:10px">${S.workouts.length} workouts · ${S.body.length} body entries · ${S.templates.length} templates</p>
+    <div class="card"><h3>Data</h3><p class="small muted" style="margin-bottom:10px">${S.workouts.length} workouts · ${S.body.length} body entries · ${S.templates.length} templates · ${S.habits.length} habits (${Object.keys(S.habitLog).length} days logged)</p>
       <button class="btn danger" id="resetBtn">Erase all data</button></div>
     <p class="small muted" style="text-align:center;margin:10px 0 20px">Lift Log · works offline · add it to your Home Screen from Safari's Share menu</p>`;
   $("#unitSeg").onclick = e => { const b = e.target.closest("[data-u]"); if (!b) return; st.unit = b.dataset.u; save(); renderMe(); tickHeader(); toast(`Units: ${st.unit === "lb" ? "pounds" : "kilograms"}`); };
@@ -1326,7 +1378,7 @@ function renderMe(){
   $("#impBtn").onclick = () => $("#impFile").click();
   $("#impFile").onchange = e => { const f = e.target.files[0]; e.target.value = ""; if (f) importFile(f); };
   $("#resetBtn").onclick = async () => {
-    if (!(await confirmBox("Erase ALL Lift Log data?", {ok: "Erase everything", danger: true, sub: "Workouts, body stats, templates and settings on this phone will be deleted. Export a backup first if you might want them."}))) return;
+    if (!(await confirmBox("Erase ALL Lift Log data?", {ok: "Erase everything", danger: true, sub: "Workouts, body stats, templates, habits and settings on this phone will be deleted. Export a backup first if you might want them."}))) return;
     localStorage.removeItem(KEY); load(); buildLib(); stopRest(); wakeOff(); renderAll(); toast("All data erased");
   };
 }
@@ -1335,7 +1387,7 @@ function renameSheet(tp){
     onMount: b => { $("#rnGo", b).onclick = () => { const v = $("#rnI", b).value.trim(); if (v){ tp.name = v; save(); } closeSheet(r.m); renderMe(); }; }});
 }
 function exportData(){
-  const payload = {app: "lift-log", version: 1, exportedAt: new Date().toISOString(), data: {...S, active: S.active, restEnd: null}};
+  const payload = {app: "lift-log", version: 2, exportedAt: new Date().toISOString(), data: {...S, active: S.active, restEnd: null}};
   const json = JSON.stringify(payload, null, 1);
   const name = `lift-log-backup-${ymd()}.json`;
   const blob = new Blob([json], {type: "application/json"});
@@ -1353,6 +1405,8 @@ function downloadBlob(blob, name, cb){
 function validBackup(o){
   const d = o && (o.app === "lift-log" ? o.data : o);
   if (!d || !Array.isArray(d.workouts)) return null;
+  if (d.habits != null && (!Array.isArray(d.habits) || !d.habits.every(h => h && h.id && typeof h.name === "string"))) return null;
+  if (d.habitLog != null && (typeof d.habitLog !== "object" || Array.isArray(d.habitLog))) return null;
   if (!d.workouts.every(w => w && typeof w.date === "string" && Array.isArray(w.ex))) return null;
   return d;
 }
@@ -1361,15 +1415,279 @@ function importFile(f){
   rd.onload = async () => {
     let d = null; try { d = validBackup(JSON.parse(rd.result)); } catch (e) {}
     if (!d) return toast("⚠️ That file isn't a Lift Log backup");
-    const ok = await confirmBox("Restore this backup?", {ok: "Replace my data", danger: true, sub: `The backup has ${d.workouts.length} workouts and ${(d.body || []).length} body entries. It will replace what's on this phone now (${S.workouts.length} workouts).`});
+    const hasHabits = Array.isArray(d.habits);
+    const ok = await confirmBox("Restore this backup?", {ok: "Replace my data", danger: true, sub: `The backup has ${d.workouts.length} workouts, ${(d.body || []).length} body entries${hasHabits ? ` and ${d.habits.length} habits (${Object.keys(d.habitLog || {}).length} days logged)` : ""}. It will replace what's on this phone now (${S.workouts.length} workouts).${hasHabits ? "" : " This older backup has no habits, so your current habits stay as they are."}`});
     if (!ok) return;
-    const keepBackupDate = S.settings.lastBackup;
+    const keepBackupDate = S.settings.lastBackup, keepHabits = S.habits, keepLog = S.habitLog;
     S = Object.assign(DEFAULT(), d); S.settings = Object.assign(DEFAULT().settings, d.settings || {}); S.settings.lastBackup = S.settings.lastBackup || keepBackupDate;
     ["workouts","templates","body","customEx"].forEach(k => { if (!Array.isArray(S[k])) S[k] = []; });
+    if (!hasHabits){ S.habits = keepHabits; S.habitLog = keepLog; }
+    fixHabits();
     S.restEnd = null; save(); buildLib(); ED.live = null; renderAll(); toast(`Restored ${S.workouts.length} workouts ✓`);
   };
   rd.readAsText(f);
 }
+
+/* ===================== HABITS =====================
+ * S.habits:   [{id, name, emoji, days:[0-6 weekdays it's scheduled], target:null|number, unit, on, created:"YYYY-MM-DD"}]
+ * S.habitLog: {"YYYY-MM-DD": {habitId: count}}  (count ≥ target, or ≥ 1 for simple habits, means done)
+ * Streaks and percentages only look at scheduled days, so an unscheduled day never breaks a streak. */
+const ALLDAYS = [0, 1, 2, 3, 4, 5, 6];
+function starterHabits(){
+  const t = ymd(), h = (emoji, name, extra = {}) => ({id: uid(), emoji, name, days: ALLDAYS.slice(), target: null, unit: "", on: true, created: t, ...extra});
+  return [
+    h("🥩", "Hit protein target"),
+    h("💧", "Drink water goal", {target: 8, unit: "glasses"}),
+    h("😴", "7+ hours sleep"),
+    h("🚶", "Daily step goal / walk"),
+    h("💊", "Creatine / vitamins"),
+    h("🧘", "Mobility / stretching", {days: [1, 3, 6, 0]}),
+    h("🌙", "No late-night snacking"),
+    h("📝", "Coach homework", {days: [2, 4, 5], on: false, example: true})
+  ];
+}
+function fixHabits(){
+  if (!Array.isArray(S.habits)) S.habits = starterHabits();
+  if (!S.habitLog || typeof S.habitLog !== "object" || Array.isArray(S.habitLog)) S.habitLog = {};
+  S.habits.forEach(h => { if (!Array.isArray(h.days) || !h.days.length) h.days = ALLDAYS.slice(); if (!h.created) h.created = ymd(); if (h.on === undefined) h.on = true; });
+}
+const hCount = (h, d) => (S.habitLog[d] && S.habitLog[d][h.id]) || 0;
+const hGoal = h => h.target && h.target > 1 ? h.target : 1;
+const hDone = (h, d) => hCount(h, d) >= hGoal(h);
+const hSched = (h, d) => h.days.includes(parseYmd(d).getDay());
+function hStart(h){ // first day that counts: creation date, or the earliest day he logged it
+  let s = h.created || ymd();
+  for (const d in S.habitLog) if (d < s && S.habitLog[d][h.id]) s = d;
+  return s;
+}
+function setCount(h, d, n){
+  n = Math.max(0, Math.min(99, Math.round(n)));
+  if (!S.habitLog[d]) S.habitLog[d] = {};
+  if (n) S.habitLog[d][h.id] = n; else delete S.habitLog[d][h.id];
+  if (!Object.keys(S.habitLog[d]).length) delete S.habitLog[d];
+  save();
+}
+function habitStats(h){
+  const today = ymd(), start = hStart(h);
+  // current streak: walk back from today over scheduled days; today still pending doesn't break it
+  let cur = 0, d = parseYmd(today);
+  for (let i = 0; i < 3660; i++, d = addDays(d, -1)){
+    const ds = ymd(d); if (ds < start) break;
+    if (!hSched(h, ds)) continue;
+    if (hDone(h, ds)) cur++; else if (ds === today) continue; else break;
+  }
+  // best streak: walk forward from the start
+  let best = 0, run = 0;
+  for (let x = parseYmd(start); ymd(x) <= today; x = addDays(x, 1)){
+    const ds = ymd(x); if (!hSched(h, ds)) continue;
+    if (hDone(h, ds)){ run++; best = Math.max(best, run); } else if (ds !== today) run = 0;
+  }
+  // last 30 days (today counts only once it's done)
+  let sch = 0, dn = 0;
+  for (let i = 0; i < 30; i++){
+    const ds = ymd(addDays(parseYmd(today), -i)); if (ds < start) break;
+    if (!hSched(h, ds)) continue;
+    if (hDone(h, ds)){ sch++; dn++; } else if (ds !== today) sch++;
+  }
+  let total = 0; for (const k in S.habitLog) if (S.habitLog[k][h.id] >= hGoal(h)) total++;
+  return {cur, best, pct: sch ? Math.round(dn / sch * 100) : null, sch30: sch, done30: dn, total};
+}
+function dayScore(ds){
+  const hs = S.habits.filter(h => h.on && hSched(h, ds) && ds >= hStart(h));
+  return {done: hs.filter(h => hDone(h, ds)).length, total: hs.length};
+}
+function weekHabitScore(){
+  const mon = mondayOf(new Date()), today = ymd();
+  let done = 0, sched = 0, full = 0;
+  for (let i = 0; i < 7; i++){
+    const ds = ymd(addDays(mon, i));
+    S.habits.forEach(h => { if (!h.on || !hSched(h, ds)) return; if (ds >= (h.created || today) || ds >= hStart(h)) full++; if (ds > today || ds < hStart(h)) return; sched++; if (hDone(h, ds)) done++; });
+  }
+  return {done, sched, full, pct: sched ? Math.round(done / sched * 100) : 0};
+}
+function habitsSummaryHTML(){
+  if (!S.habits.some(h => h.on)) return "";
+  const t = dayScore(ymd()), w = weekHabitScore();
+  return `<button class="hsum" id="hSum"><span class="hsum-ring" style="--p:${t.total ? t.done / t.total * 100 : 0}"><span>${t.done}/${t.total}</span></span>
+    <span class="grow"><b>Habits today</b><br><span class="small muted">${t.total && t.done === t.total ? "All done. Nice! 🔥" : `${t.total - t.done} left`} · this week ${w.done}/${w.sched} (${w.pct}%)</span></span><span class="muted" style="font-size:22px">›</span></button>`;
+}
+
+let habDay = null;
+const EMOJIS = ["✅","🥩","💧","😴","🚶","💊","🧘","🌙","📝","🏃","🥗","🍎","🚭","🍺","📵","📖","🧊","☀️","🧠","❤️","🦵","🏋️","⏰","🙏"];
+function renderHabits(){
+  fixHabits();
+  const today = ymd();
+  if (!habDay || habDay > today) habDay = today;
+  const el = $("#habitsBody"), d = parseYmd(habDay), mon = mondayOf(d);
+  const ws = weekHabitScore();
+  const sched = S.habits.filter(h => h.on && hSched(h, habDay));
+  const unsched = S.habits.filter(h => h.on && !hSched(h, habDay));
+  const off = S.habits.filter(h => !h.on).length;
+  const sc = dayScore(habDay);
+  const row = (h, extra = "") => {
+    const n = hCount(h, habDay), g = hGoal(h), done = n >= g, st = habitStats(h);
+    return `<div class="hrow${done ? " done" : ""}${extra}" data-h="${h.id}">
+      <button class="hmain" data-ha="tap" aria-label="${esc(h.name)}${done ? " (done)" : ""}"><span class="hemo">${esc(h.emoji || "✅")}</span>
+        <span class="grow"><span class="hname">${esc(h.name)}</span><span class="hmeta">${g > 1 ? `${n}/${g} ${esc(h.unit || "")} · ` : ""}${st.cur ? `🔥 ${st.cur} streak` : st.best ? `Best ${st.best}` : "Start a streak"}</span></span></button>
+      ${g > 1 ? `<div class="hcount"><button data-ha="minus" aria-label="Minus one">−</button><button data-ha="plus" class="hplus" aria-label="Plus one">${done ? "✓" : "+"}</button></div>`
+              : `<button class="hchk" data-ha="tap" aria-label="Check ${esc(h.name)}">✓</button>`}
+      <button class="hinfo" data-ha="info" aria-label="${esc(h.name)} stats">›</button></div>`;
+  };
+  el.innerHTML = `<h2 class="title">Habits</h2>
+    <div class="card"><h3>This week <span class="small muted">${ws.done}/${ws.sched} so far</span></h3>
+      <div class="hbar"><i style="width:${ws.pct}%"></i></div>
+      <div class="small muted" style="margin-top:8px">${ws.pct}% of scheduled habits done · ${ws.full} scheduled this whole week</div></div>
+    <div class="hday"><button class="icon-btn" id="hPrev" aria-label="Previous day">‹</button>
+      <div class="grow" style="text-align:center"><b style="font-size:17px">${habDay === today ? "Today" : habDay === ymd(addDays(parseYmd(today), -1)) ? "Yesterday" : DOW[d.getDay()]}</b><div class="small muted">${fmtDate(habDay, true)}</div></div>
+      <button class="icon-btn" id="hNext" aria-label="Next day" ${habDay >= today ? "disabled style='opacity:.3'" : ""}>›</button></div>
+    <div class="hweek">${Array.from({length: 7}, (_, i) => { const x = addDays(mon, i), xs = ymd(x), s = dayScore(xs), fut = xs > today;
+      return `<button data-day="${xs}" class="${xs === habDay ? "on" : ""}${fut ? " fut" : ""}${!fut && s.total && s.done === s.total ? " full" : ""}" ${fut ? "disabled" : ""}><span>${DOW[x.getDay()].slice(0, 2)}</span><b>${x.getDate()}</b><small>${fut || !s.total ? "&nbsp;" : `${s.done}/${s.total}`}</small></button>`; }).join("")}</div>
+    <div id="hList">
+      <div class="lbl" style="margin:4px 4px 8px">${sched.length ? `${sc.done} of ${sc.total} done` : "Nothing scheduled"}</div>
+      ${sched.map(h => row(h)).join("") || `<div class="empty">No habits scheduled for this day.</div>`}
+      ${unsched.length ? `<div class="lbl" style="margin:16px 4px 8px">Not scheduled ${habDay === today ? "today" : "this day"} · optional</div>${unsched.map(h => row(h, " unsched")).join("")}` : ""}
+    </div>
+    <div class="btn-row" style="margin-top:12px"><button class="btn" id="hManage">⚙️ Manage habits</button><button class="btn" id="hAdd">＋ Add habit</button></div>
+    ${off ? `<p class="small muted" style="text-align:center;margin-top:10px">${off} habit${off > 1 ? "s" : ""} turned off · turn on in Manage habits</p>` : ""}`;
+  $("#hPrev").onclick = () => { habDay = ymd(addDays(parseYmd(habDay), -1)); renderHabits(); };
+  $("#hNext").onclick = () => { if (habDay < today){ habDay = ymd(addDays(parseYmd(habDay), 1)); renderHabits(); } };
+  $("#hManage").onclick = manageHabits;
+  $("#hAdd").onclick = () => editHabit(null);
+  el.onclick = e => {
+    const dd = e.target.closest("[data-day]"); if (dd){ habDay = dd.dataset.day; return renderHabits(); }
+    const b = e.target.closest("[data-ha]"); if (!b) return;
+    const h = S.habits.find(x => x.id === b.closest("[data-h]").dataset.h), a = b.dataset.ha, n = hCount(h, habDay), g = hGoal(h);
+    if (a === "info") return habitDetail(h);
+    if (a === "plus") setCount(h, habDay, n + 1);
+    else if (a === "minus") setCount(h, habDay, n - 1);
+    else setCount(h, habDay, g > 1 ? (n >= g ? 0 : n + 1) : (n ? 0 : 1));
+    if (!n || a === "plus") buzz(20);
+    const wasDone = n >= g, nowDone = hDone(h, habDay);
+    renderHabits();
+    if (!wasDone && nowDone){ const s = habitStats(h); if (s.cur >= 3 && habDay === today) toast(`🔥 ${s.cur}-day streak: ${h.name}`); }
+    if (dayScore(habDay).total && dayScore(habDay).done === dayScore(habDay).total && !wasDone && nowDone) toast(habDay === today ? "All habits done today! 🔥" : "Day complete ✓");
+  };
+  // swipe left/right on the list to change days
+  const lst = $("#hList"); let sx = null, sy = 0;
+  lst.addEventListener("touchstart", e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive: true});
+  lst.addEventListener("touchend", e => {
+    if (sx == null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+    if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * .6) return;
+    if (dx > 0) $("#hPrev").click(); else $("#hNext").click();
+  }, {passive: true});
+}
+function calendarHTML(h, monthDate){
+  const today = ymd(), start = hStart(h), y = monthDate.getFullYear(), m = monthDate.getMonth();
+  const first = new Date(y, m, 1), lead = (first.getDay() + 6) % 7, nd = new Date(y, m + 1, 0).getDate();
+  let cells = Array.from({length: lead}, () => `<span class="cc blank"></span>`).join("");
+  for (let i = 1; i <= nd; i++){
+    const ds = ymd(new Date(y, m, i)), sc = hSched(h, ds), n = hCount(h, ds), g = hGoal(h);
+    let cls = "cc";
+    if (ds > today) cls += " fut";
+    else if (n >= g) cls += " done";
+    else if (n > 0) cls += " part";
+    else if (sc && ds >= start && ds < today) cls += " miss";
+    if (!sc) cls += " off";
+    if (ds === today) cls += " today";
+    cells += `<button class="${cls}" data-cd="${ds}" ${ds > today ? "disabled" : ""} aria-label="${fmtDate(ds)}${n >= g ? " done" : ""}">${i}</button>`;
+  }
+  return `<div class="calh"><button class="icon-btn" data-cm="-1" aria-label="Previous month">‹</button><b class="grow" style="text-align:center">${["January","February","March","April","May","June","July","August","September","October","November","December"][m]} ${y}</b><button class="icon-btn" data-cm="1" aria-label="Next month" ${y > new Date().getFullYear() || (y === new Date().getFullYear() && m >= new Date().getMonth()) ? "disabled style='opacity:.3'" : ""}>›</button></div>
+    <div class="cal">${["M","T","W","T","F","S","S"].map(x => `<span class="cw">${x}</span>`).join("")}${cells}</div>
+    <div class="legend"><span><i style="background:var(--good)"></i>Done</span>${hGoal(h) > 1 ? `<span><i style="background:rgba(52,211,153,.35)"></i>Partly</span>` : ""}<span><i style="border:1.5px solid rgba(248,113,113,.7)"></i>Missed</span><span><i style="background:#1A1E25;border:1px solid #3A414D"></i>Not scheduled</span></div>`;
+}
+function habitDetail(h){
+  let month = new Date(); month.setDate(1);
+  const r = openSheet({title: `${esc(h.emoji || "✅")} ${esc(h.name)}`, full: true, body: `<div id="hdBody"></div>`,
+    onMount: b => {
+      const draw = () => {
+        const s = habitStats(h);
+        $("#hdBody", b).innerHTML = `
+          <p class="sub" style="margin:0 0 12px">${h.days.length === 7 ? "Every day" : h.days.slice().sort((a, c) => ((a + 6) % 7) - ((c + 6) % 7)).map(x => DOW[x]).join(" · ")}${hGoal(h) > 1 ? ` · goal ${hGoal(h)} ${esc(h.unit || "")}` : ""}${h.on ? "" : " · turned off"}</p>
+          <div class="kv" style="grid-template-columns:1fr 1fr;margin:0 0 12px">
+            <div class="stat"><b id="hdCur">${s.cur}</b><span>Current streak 🔥</span></div><div class="stat"><b id="hdBest">${s.best}</b><span>Best streak</span></div>
+            <div class="stat"><b id="hdPct">${s.pct == null ? "–" : s.pct + "%"}</b><span>Last 30 days${s.sch30 ? ` (${s.done30}/${s.sch30})` : ""}</span></div><div class="stat"><b>${s.total}</b><span>Days done, all time</span></div></div>
+          <div class="card"><h3>Don't break the chain</h3>${calendarHTML(h, month)}<p class="small muted" style="margin-top:10px">Tap a past day to check it off or undo it. Streaks only count scheduled days.</p></div>
+          <div class="btn-row"><button class="btn" data-hd="edit">✏️ Edit habit</button></div>`;
+      };
+      draw();
+      b.addEventListener("click", e => {
+        const cm = e.target.closest("[data-cm]"); if (cm && !cm.disabled){ month = new Date(month.getFullYear(), month.getMonth() + +cm.dataset.cm, 1); return draw(); }
+        const cd = e.target.closest("[data-cd]"); if (cd && !cd.disabled){ const ds = cd.dataset.cd; setCount(h, ds, hDone(h, ds) ? 0 : hGoal(h)); draw(); if (currentView === "habits") renderHabits(); if (currentView === "today") renderToday(); return; }
+        if (e.target.closest('[data-hd="edit"]')){ closeSheet(r.m); editHabit(h); }
+      });
+    }});
+}
+function editHabit(h){
+  const isNew = !h;
+  const f = h ? clone(h) : {id: uid(), name: "", emoji: "✅", days: ALLDAYS.slice(), target: null, unit: "", on: true, created: ymd()};
+  const r = openSheet({title: isNew ? "New habit" : "Edit habit", full: true, body: `
+    <div class="field"><label for="heName">Name</label><input class="inp" id="heName" value="${esc(f.name)}" maxlength="50" placeholder="e.g. Coach homework: band pull-aparts"></div>
+    <div class="field"><label>Icon</label><div class="row"><input class="inp" id="heEmoji" value="${esc(f.emoji)}" maxlength="4" style="width:72px;text-align:center;font-size:24px"><span class="small muted">Type any emoji or pick one</span></div>
+      <div class="epick">${EMOJIS.map(x => `<button data-e="${x}" class="${x === f.emoji ? "on" : ""}">${x}</button>`).join("")}</div></div>
+    <div class="field"><label>Schedule</label><div class="seg" id="heMode"><button data-mode="all" class="${f.days.length === 7 ? "on" : ""}">Every day</button><button data-mode="some" class="${f.days.length < 7 ? "on" : ""}">Certain days</button></div>
+      <div class="daypick" id="heDays" style="margin-top:8px;${f.days.length === 7 ? "display:none" : ""}">${[1, 2, 3, 4, 5, 6, 0].map(d => `<button data-d="${d}" class="${f.days.includes(d) ? "on" : ""}">${DOW[d]}</button>`).join("")}</div>
+      <div class="btn-row" id="heQuick" style="margin-top:8px;${f.days.length === 7 ? "display:none" : ""}"><button class="btn sm" data-q="train">Lift days</button><button class="btn sm" data-q="rest">Rest days</button><button class="btn sm" data-q="wk">Weekdays</button></div></div>
+    <div class="field"><label>Daily count <span style="text-transform:none;font-weight:500">(optional)</span></label>
+      <div class="row"><div class="stepper"><button data-t="-1" aria-label="Lower target">−</button><output id="heT">${f.target > 1 ? f.target : "Off"}</output><button data-t="1" aria-label="Raise target">＋</button></div>
+      <input class="inp grow" id="heUnit" value="${esc(f.unit || "")}" placeholder="unit, e.g. glasses" maxlength="16"></div>
+      <span class="small muted">Use a count for things like 8 glasses of water. Leave it off for a simple check.</span></div>
+    <label class="toggle"><span><b>Active</b><br><span class="small muted">Turned-off habits are hidden and don't count</span></span><span class="switch"><input type="checkbox" id="heOn" ${f.on ? "checked" : ""}><span></span></span></label>
+    <button class="btn primary" id="heSave" style="margin-top:10px">${isNew ? "Add habit" : "Save changes"}</button>
+    ${isNew ? "" : `<button class="btn danger" id="heDel" style="margin-top:10px">🗑 Delete habit</button>`}`,
+    onMount: b => {
+      const syncDays = () => $$("#heDays button", b).forEach(x => x.classList.toggle("on", f.days.includes(+x.dataset.d)));
+      b.addEventListener("click", async e => {
+        const em = e.target.closest("[data-e]"); if (em){ f.emoji = em.dataset.e; $("#heEmoji", b).value = f.emoji; $$(".epick button", b).forEach(x => x.classList.toggle("on", x === em)); return; }
+        const md = e.target.closest("[data-mode]"); if (md){ const all = md.dataset.mode === "all"; $$("#heMode button", b).forEach(x => x.classList.toggle("on", x === md)); $("#heDays", b).style.display = all ? "none" : ""; $("#heQuick", b).style.display = all ? "none" : ""; f.days = all ? ALLDAYS.slice() : (f.days.length === 7 ? S.settings.days.slice() : f.days); syncDays(); return; }
+        const dd = e.target.closest("#heDays [data-d]"); if (dd){ const d = +dd.dataset.d; f.days = f.days.includes(d) ? f.days.filter(x => x !== d) : [...f.days, d]; syncDays(); return; }
+        const q = e.target.closest("[data-q]"); if (q){ f.days = q.dataset.q === "train" ? S.settings.days.slice() : q.dataset.q === "rest" ? ALLDAYS.filter(x => !S.settings.days.includes(x)) : [1, 2, 3, 4, 5]; syncDays(); return; }
+        const t = e.target.closest("[data-t]"); if (t){ let v = (f.target > 1 ? f.target : 1) + +t.dataset.t; if (v === 2 && +t.dataset.t > 0 && !(f.target > 1)) v = 2; f.target = v <= 1 ? null : Math.min(50, v); $("#heT", b).textContent = f.target || "Off"; return; }
+        if (e.target.closest("#heSave")){
+          f.name = $("#heName", b).value.trim(); f.emoji = $("#heEmoji", b).value.trim() || "✅"; f.unit = $("#heUnit", b).value.trim(); f.on = $("#heOn", b).checked;
+          if (!f.name){ $("#heName", b).focus(); return toast("Give the habit a name"); }
+          if (!f.days.length) return toast("Pick at least one day");
+          delete f.example;
+          if (isNew) S.habits.push(f); else Object.assign(h, f);
+          save(); closeSheet(r.m); refreshHabitViews(); toast(isNew ? `Added ${f.name}` : "Habit saved");
+        }
+        if (e.target.closest("#heDel")){
+          const ok = await confirmBox(`Delete “${h.name}”?`, {ok: "Delete", danger: true, sub: "Its check-off history will be removed too. To keep the history, turn it off instead."});
+          if (!ok) return;
+          S.habits = S.habits.filter(x => x.id !== h.id);
+          for (const d in S.habitLog){ delete S.habitLog[d][h.id]; if (!Object.keys(S.habitLog[d]).length) delete S.habitLog[d]; }
+          save(); closeSheet(r.m); refreshHabitViews(); toast("Habit deleted");
+        }
+      });
+      if (isNew) setTimeout(() => $("#heName", b).focus(), 50);
+    }});
+}
+function manageHabits(){
+  const r = openSheet({title: "Manage habits", full: true, body: `<div id="mhBody"></div>`, onClose: refreshHabitViews,
+    onMount: b => {
+      const draw = () => {
+        $("#mhBody", b).innerHTML = `<p class="sub" style="margin:0 0 12px">Reorder, turn habits on or off, or tap Edit to rename, change the icon, schedule or count.</p>
+          ${S.habits.map((h, i) => `<div class="list-item mh" data-i="${i}"><span class="hemo" style="width:36px;height:36px;font-size:20px">${esc(h.emoji)}</span>
+            <div class="grow"><div class="nm"${h.on ? "" : " style='opacity:.5'"}>${esc(h.name)}</div><div class="ds">${h.days.length === 7 ? "Every day" : h.days.slice().sort((a, c) => ((a + 6) % 7) - ((c + 6) % 7)).map(x => DOW[x]).join(" ")}${h.target > 1 ? ` · ${h.target} ${esc(h.unit || "")}` : ""}${h.example ? " · example" : ""}</div></div>
+            <button class="mhb" data-m="up" ${i === 0 ? "disabled" : ""} aria-label="Move up">↑</button><button class="mhb" data-m="down" ${i === S.habits.length - 1 ? "disabled" : ""} aria-label="Move down">↓</button>
+            <label class="switch"><input type="checkbox" data-m="on" ${h.on ? "checked" : ""} aria-label="${esc(h.name)} on"><span></span></label>
+            <button class="mhb" data-m="edit" aria-label="Edit ${esc(h.name)}">✏️</button></div>`).join("") || `<div class="empty">No habits yet.</div>`}
+          <button class="btn primary" data-m="add" style="margin-top:6px">＋ Add habit</button>
+          <button class="btn ghost small" data-m="starters" style="margin-top:6px;min-height:44px">Add back the starter habits</button>`;
+      };
+      draw();
+      b.addEventListener("click", e => {
+        const m = e.target.closest("[data-m]"); if (!m || m.disabled) return;
+        const it = m.closest("[data-i]"), i = it ? +it.dataset.i : -1, k = m.dataset.m;
+        if (k === "on") return; // handled by change
+        if (k === "up" || k === "down"){ const j = k === "up" ? i - 1 : i + 1; [S.habits[i], S.habits[j]] = [S.habits[j], S.habits[i]]; save(); draw(); }
+        if (k === "edit"){ closeSheet(r.m); editHabit(S.habits[i]); }
+        if (k === "add"){ closeSheet(r.m); editHabit(null); }
+        if (k === "starters"){ const have = new Set(S.habits.map(h => h.name.toLowerCase())); const add = starterHabits().filter(h => !have.has(h.name.toLowerCase())); S.habits.push(...add); save(); draw(); toast(add.length ? `Added ${add.length} starter habit${add.length > 1 ? "s" : ""}` : "You already have all the starters"); }
+      });
+      b.addEventListener("change", e => { const m = e.target.closest('[data-m="on"]'); if (!m) return; const h = S.habits[+m.closest("[data-i]").dataset.i]; h.on = m.checked; save(); draw(); });
+    }});
+}
+function refreshHabitViews(){ if (currentView === "habits") renderHabits(); if (currentView === "today") renderToday(); }
 
 /* ===================== NAV + INIT ===================== */
 let currentView = "today";
@@ -1377,10 +1695,12 @@ function showView(v){
   currentView = v;
   $$(".view").forEach(x => x.classList.toggle("active", x.id === "view-" + v));
   $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.view === v));
+  if (v === "habits" && currentView !== "habits") habDay = null;
   if (v === "today") renderToday();
   if (v === "history") renderHistory();
   if (v === "progress") renderProgress();
   if (v === "me") renderMe();
+  if (v === "habits") renderHabits();
 }
 function renderAll(){ showView(currentView); tickHeader(); }
 document.querySelector("nav").addEventListener("click", e => { const b = e.target.closest("button"); if (b) showView(b.dataset.view); });
