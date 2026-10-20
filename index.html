@@ -240,6 +240,16 @@ canvas.chart{width:100%;height:220px;display:block;background:var(--bg);border-r
 .list-item.mh{gap:6px;padding:8px}
 .mhb{width:40px;height:44px;border-radius:10px;background:var(--surface2);font-size:16px;font-weight:800;flex:none}
 .mhb:disabled{opacity:.25}
+.sheet-foot{display:flex;gap:10px;align-items:center;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface)}
+.sheet-foot[hidden]{display:none}
+.sheet-foot .btn.primary{flex:1}
+.list-item.pick{transition:background .12s,border-color .12s}
+.list-item.pick.sel{border-color:var(--accent);background:rgba(255,107,61,.12)}
+.list-item.pick.added{opacity:.55}
+.pk{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:800;font-size:16px;color:var(--muted);flex:none}
+.sel .pk{background:var(--accent);border-color:var(--accent);color:#fff}
+.pastnote{font-size:13px;color:var(--accent2);background:rgba(255,162,74,.1);border-radius:12px;padding:9px 12px;margin:0 0 10px;line-height:1.4}
+.tf input[type=date],.tf input[type=time]{min-width:0;-webkit-appearance:none;appearance:none}
 @media (min-width:600px){ body{overflow:auto} }
 </style>
 </head>
@@ -371,7 +381,7 @@ const parseYmd = s => { const [y, m, d] = s.split("-").map(Number); return new D
 const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmtDate = (s, long) => { const d = parseYmd(s); return long ? `${DOW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` : `${MON[d.getMonth()]} ${d.getDate()}`; };
-const fmtDur = ms => { const m = Math.max(0, Math.round(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m} min`; };
+const fmtDur = ms => { const m = Math.max(0, Math.round(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ""}` : `${m} min`; };
 const fmtClock = s => { s = Math.max(0, Math.ceil(s)); return `${Math.floor(s / 60)}:${pad(s % 60)}`; };
 const fmtSec = s => s == null || s === "" ? "" : (s >= 60 && s % 60 === 0 ? `${s / 60} min` : s >= 60 ? fmtClock(s) : `${s}s`);
 const num = v => { if (v === "" || v == null) return null; const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
@@ -590,7 +600,7 @@ function prMap(w){
   return out;
 }
 function lastTime(name, w){
-  const key = exKey(name), lim = w && S.workouts.some(x => x.id === w.id) ? sortKey(w) : "~";
+  const key = exKey(name), lim = w && (w.past || S.workouts.some(x => x.id === w.id)) ? sortKey(w) : "~";
   const list = finished().filter(x => (!w || x.id !== w.id) && sortKey(x) < lim).reverse();
   for (const x of list){ const ex = x.ex.find(e => exKey(e.name) === key && doneSets(e).length); if (ex) return {date: x.date, ex, sets: doneSets(ex)}; }
   return null;
@@ -713,11 +723,64 @@ $("#restSkip").onclick = stopRest;
 
 let wakeLock = null;
 async function wakeOn(){
-  if (!S.settings.wake || !S.active || !("wakeLock" in navigator) || document.hidden || wakeLock) return;
+  if (!S.settings.wake || !S.active || S.active.past || !("wakeLock" in navigator) || document.hidden || wakeLock) return;
   try { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => wakeLock = null); } catch (e) { wakeLock = null; }
 }
 function wakeOff(){ if (wakeLock){ wakeLock.release().catch(() => {}); wakeLock = null; } }
 document.addEventListener("visibilitychange", () => { if (!document.hidden){ wakeOn(); tickRest(); tickHeader(); } });
+
+/* ===================== WORKOUT TIME (date, start time, duration) ===================== */
+const hhmm = ms => { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const atTime = (date, t) => { const [y, m, d] = date.split("-").map(Number); const [hh, mm] = (t || "12:00").split(":").map(Number); return new Date(y, m - 1, d, hh || 0, mm || 0).getTime(); };
+const durMin = w => w.end && w.start ? Math.max(1, Math.round((w.end - w.start) / 60000)) : null;
+const fmtTime = ms => new Date(ms).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"});
+const DUR_CHIPS = [45, 60, 75, 90];
+function timeFieldsHTML(date, time, dur){
+  return `<div class="tf"><div class="row"><div class="field grow"><label>Date</label><input class="inp" type="date" data-f="date" id="edDate" value="${date}" max="${ymd()}"></div>
+    <div class="field" style="width:42%"><label>Start time</label><input class="inp" type="time" data-f="time" value="${time}"></div></div>
+    <div class="field"><label>Duration (min)</label><div class="row"><input class="inp" data-f="dur" inputmode="numeric" value="${dur}" style="width:84px;text-align:center;font-weight:800">
+    <div class="chips" style="padding:0;flex:1">${DUR_CHIPS.map(m => `<button type="button" class="chip${+dur === m ? " on" : ""}" data-dur="${m}">${m}</button>`).join("")}</div></div></div></div>`;
+}
+/* reads the time fields inside `root` and writes date/start/end onto workout w */
+function applyTimeFields(root, w){
+  const date = $('[data-f="date"]', root)?.value || w.date, time = $('[data-f="time"]', root)?.value || hhmm(w.start || Date.now());
+  const dur = Math.max(1, Math.min(600, Math.round(num($('[data-f="dur"]', root)?.value) || durMin(w) || 60)));
+  w.date = date; w.start = atTime(date, time); w.end = w.start + dur * 60000;
+  return {date, time, dur};
+}
+function bindTimeFields(root, onChange){
+  root.addEventListener("click", e => { const c = e.target.closest("[data-dur]"); if (!c || !root.contains(c)) return; const tf = c.closest(".tf"); $('[data-f="dur"]', tf).value = c.dataset.dur; $$("[data-dur]", tf).forEach(x => x.classList.toggle("on", x === c)); onChange && onChange(); });
+  root.addEventListener("input", e => { if (e.target.dataset.f === "dur"){ const tf = e.target.closest(".tf"); $$("[data-dur]", tf).forEach(x => x.classList.toggle("on", x.dataset.dur === e.target.value.trim())); } if (["date","time","dur"].includes(e.target.dataset.f)) onChange && onChange(); });
+}
+
+/* "Log a past workout": for logging after the gym */
+function pastSheet(){
+  const st = S.settings, dur = st.lastDuration || 60;
+  const now = new Date(), guess = new Date(Math.floor((now.getTime() - dur * 60000) / 9e5) * 9e5);
+  const time = st.lastStartTime || hhmm(guess.getTime());
+  const last = finished().reverse()[0];
+  const r = openSheet({title: "Log a past workout", body: `
+    <p class="sub" style="margin:0 0 12px">For when you log after the gym. No rest timer or clock, and any set with numbers filled in counts. No need to tick each one.</p>
+    ${timeFieldsHTML(ymd(), time, dur)}
+    <div class="stack" style="margin-top:6px">
+      <button class="btn primary" data-p="pick">＋ Pick exercises</button>
+      ${last ? `<button class="btn" data-p="copy">🔁 Copy last workout <span class="small muted" style="font-weight:600">· ${esc(last.title)}</span></button>` : ""}
+      ${S.templates.map(t => `<button class="btn" data-p="tpl" data-id="${t.id}">⭐ ${esc(t.name)}</button>`).join("")}
+    </div>`,
+    onMount: b => {
+      bindTimeFields(b);
+      b.addEventListener("click", e => {
+        const a = e.target.closest("[data-p]"); if (!a) return;
+        const w = newWorkout(); const t = applyTimeFields(b, w);
+        w.past = true; w.title = `${["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][parseYmd(t.date).getDay()]} workout`;
+        st.lastDuration = t.dur; st.lastStartTime = t.time;
+        if (a.dataset.p === "copy"){ w.title = last.title; w.notes = last.notes || ""; w.ex = last.ex.map(ex => exFromTemplate({...ex, sets: (doneSets(ex).length ? doneSets(ex) : ex.sets)}, w)); }
+        if (a.dataset.p === "tpl"){ const tp = S.templates.find(x => x.id === a.dataset.id); w.title = tp.name; w.notes = tp.notes || ""; w.ex = tp.ex.map(x => exFromTemplate(x, w)); }
+        save();
+        startWorkout(w).then(ok => { if (!ok) return; if (a.dataset.p === "pick") addExerciseSheet(ED.live); else toast("Copied. Adjust the numbers, then Finish"); });
+      });
+    }});
+}
 
 /* ===================== WORKOUT BUILDING ===================== */
 function newWorkout(title){
@@ -778,13 +841,13 @@ function editorHTML(ed){
   const ssLetters = {}; let letter = 0;
   w.ex.forEach(ex => { if (ex.ss && !ssLetters[ex.ss]) ssLetters[ex.ss] = "ABCDEFGH"[letter++] || "?"; });
   return `
-  ${ed.mode === "edit" ? `<div class="field"><label for="edDate">Date</label><input class="inp" type="date" id="edDate" value="${w.date}" max="${ymd()}"></div>` : ""}
+  ${ed.mode === "edit" || w.past ? `${w.past && ed.mode === "live" ? `<div class="pastnote">🕘 Logging a past workout. Sets with numbers count, ticking is optional.</div>` : ""}${timeFieldsHTML(w.date, hhmm(w.start || Date.now()), durMin(w) || S.settings.lastDuration || 60)}` : ""}
   <div class="wk-head"><input class="wk-title" data-f="title" value="${esc(w.title)}" aria-label="Workout name" maxlength="60"></div>
   <textarea class="inp" data-f="notes" placeholder="Workout notes: coach cues, how you felt, energy…" style="min-height:56px;margin-bottom:12px">${esc(w.notes)}</textarea>
-  ${w.ex.length ? "" : `<div class="empty"><div class="big">🏋️</div>No exercises yet.<br>Paste your coach's workout or add exercises one at a time.</div>`}
+  ${w.ex.length ? "" : `<div class="empty"><div class="big">🏋️</div>No exercises yet.<br>Tap <b>Add exercise</b> to pick from your recent and most-used lifts.</div>`}
   <div class="exlist">${w.ex.map((ex, i) => exCardHTML(ed, i, prs, ssLetters)).join("")}</div>
   <div class="wk-actions">
-    <div class="btn-row"><button class="btn" data-act="add">＋ Add exercise</button><button class="btn" data-act="paste">📋 Paste</button></div>
+    <div class="btn-row"><button class="btn primary" data-act="add" style="flex:2">＋ Add exercise</button><button class="btn" data-act="paste">📋 Paste</button></div>
     ${ed.mode === "live" ? `<button class="btn good" data-act="finish" id="finishBtn">✓ Finish workout</button><button class="btn ghost small muted" data-act="discard" style="min-height:44px;font-size:14px">Discard workout</button>` : ""}
   </div>`;
 }
@@ -838,7 +901,7 @@ function bindEditor(ed){
     const t = e.target, w = ed.w;
     if (t.dataset.f === "title"){ w.title = t.value; return edChanged(ed); }
     if (t.dataset.f === "notes"){ w.notes = t.value; return edChanged(ed); }
-    if (t.id === "edDate"){ if (t.value) w.date = t.value; return; }
+    if (["date","time","dur"].includes(t.dataset.f)){ applyTimeFields(t.closest(".tf"), w); if (ed.mode === "live"){ S.settings.lastDuration = durMin(w); S.settings.lastStartTime = hhmm(w.start); } edChanged(ed); if (ed.mode === "live") tickHeader(); return; }
     const card = t.closest(".ex"); if (!card) return;
     const ex = w.ex[+card.dataset.ei];
     if (t.dataset.f === "exnote"){ ex.note = t.value; return edChanged(ed); }
@@ -854,6 +917,7 @@ function bindEditor(ed){
     if (t.classList.contains("t")){ const n = num(t.value); s.t = n == null ? null : Math.round(n); }
     edChanged(ed);
   });
+  bindTimeFields(el, () => { const tf = $(".tf", el); if (tf){ applyTimeFields(tf, ed.w); edChanged(ed); if (ed.mode === "live") tickHeader(); } });
   el.addEventListener("focusin", e => { if (e.target.matches(".srow input")) setTimeout(() => e.target.select && e.target.select(), 0); });
   el.addEventListener("keydown", e => {
     if (e.key !== "Enter" || !e.target.matches(".srow input")) return;
@@ -901,7 +965,7 @@ function toggleSet(ed, i, si, row){
       const next = w.ex[i + 1];
       const inSuperset = ex.ss && next && next.ss === ex.ss;
       if (inSuperset){ toast(`Superset → ${next.name}`); }
-      else startRest(ex.rest || S.settings.rest);
+      else if (!w.past) startRest(ex.rest || S.settings.rest);
     }
   } else { s.done = false; edChanged(ed); }
   refreshCard(ed, i);
@@ -953,46 +1017,107 @@ function exMenu(ed, i){
 
 /* add / replace exercise */
 function addExerciseSheet(ed, replaceIdx = null){
+  const single = replaceIdx != null;              // replacing = pick one, done
   let cat = "All", q = "";
-  const recentKeys = [...new Set(finished().reverse().flatMap(w => w.ex.map(e => exKey(e.name))))];
-  const r = openSheet({title: replaceIdx != null ? "Replace exercise" : "Add exercise", full: true, body: `
+  const sel = [];                                 // names, in tap order
+  const inW = new Set(single ? [] : ed.w.ex.map(e => exKey(e.name)));
+  // history-derived shortcuts (no stored data needed)
+  const hist = finished().reverse();
+  const recentKeys = [], useCount = new Map(), lastSeen = new Map();
+  hist.forEach((w, wi) => w.ex.forEach(e => {
+    const k = exKey(e.name);
+    if (wi < 6 && !recentKeys.includes(k)) recentKeys.push(k);
+    if (!lastSeen.has(k)) lastSeen.set(k, wi);
+  }));
+  hist.forEach(w => new Set(w.ex.map(e => exKey(e.name))).forEach(k => useCount.set(k, (useCount.get(k) || 0) + 1)));
+  const byKey = k => allExercises().find(x => exKey(x.name) === k) || (() => { // logged name not in library (e.g. renamed custom)
+    for (const w of hist) for (const e of w.ex) if (exKey(e.name) === k) return {name: e.name, cat: e.cat || "Other", type: e.type || "wr"};
+    return null; })();
+  const recent = recentKeys.slice(0, 8).map(byKey).filter(Boolean);
+  const most = [...useCount.entries()].filter(([k]) => !recentKeys.slice(0, 8).includes(k))
+    .sort((a, b) => b[1] - a[1] || lastSeen.get(a[0]) - lastSeen.get(b[0])).slice(0, 8).map(([k]) => byKey(k)).filter(Boolean);
+  const r = openSheet({title: single ? "Replace exercise" : "Add exercises", full: true, body: `
     <input class="inp" id="exQ" type="search" placeholder="Search 70+ exercises…" autocomplete="off" enterkeyhint="search">
-    <div class="chips" id="exCats" style="margin-top:8px">${["All", "Recent", ...CATS].map(c => `<button class="chip${c === "All" ? " on" : ""}" data-c="${c}">${c}</button>`).join("")}</div>
+    <div class="chips" id="exCats" style="margin-top:8px">${["All", ...CATS].map(c => `<button class="chip${c === "All" ? " on" : ""}" data-c="${c}">${c}</button>`).join("")}</div>
     <div id="exNew"></div><div id="exList"></div>`,
-    onMount: b => {
+    onMount: (b, m) => {
+      const foot = document.createElement("div"); foot.className = "sheet-foot"; foot.hidden = single;
+      foot.innerHTML = `<button class="btn ghost sm" id="exClear" style="width:auto">Clear</button><button class="btn primary" id="exAddGo"></button>`;
+      $(".sheet", m).appendChild(foot);
+      const item = x => {
+        const k = exKey(x.name), added = inW.has(k), si = sel.indexOf(x.name), n = useCount.get(k) || 0;
+        return `<button class="list-item pick${si >= 0 ? " sel" : ""}${added ? " added" : ""}" data-n="${esc(x.name)}" aria-pressed="${si >= 0}">
+          <div class="grow"><div class="nm">${esc(x.name)}</div><div class="ds">${esc(x.cat)}${x.type === "t" ? " · timed" : ""}${x.custom ? " · custom" : ""}${n ? ` · ${n} session${n > 1 ? "s" : ""}` : ""}</div></div>
+          ${added ? `<span class="tag">Added</span>` : `<span class="pk">${si >= 0 ? (single ? "✓" : si + 1) : "＋"}</span>`}</button>`;
+      };
       const draw = () => {
-        let list = allExercises();
         const k = exKey(q);
-        if (cat === "Recent") list = recentKeys.map(rk => list.find(x => exKey(x.name) === rk) || null).filter(Boolean);
-        else if (cat !== "All") list = list.filter(x => x.cat === cat);
+        let list = allExercises(), html = "";
+        if (cat !== "All") list = list.filter(x => x.cat === cat);
         if (q){
           const ql = q.toLowerCase();
           list = list.filter(x => x.name.toLowerCase().includes(ql) || exKey(x.name).includes(k) || (LIB.find(l => l[0] === x.name) || []).slice(3).some(a => a.includes(ql) || exKey(a).includes(k)));
-        } else if (cat === "All") list.sort((a, b) => { const ia = recentKeys.indexOf(exKey(a.name)), ib = recentKeys.indexOf(exKey(b.name)); return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib); });
-        $("#exList", b).innerHTML = list.length ? list.map(x => `<button class="list-item" data-n="${esc(x.name)}"><div class="grow"><div class="nm">${esc(x.name)}</div><div class="ds">${esc(x.cat)}${x.type === "t" ? " · timed" : ""}${x.custom ? " · custom" : ""}${recentKeys.includes(exKey(x.name)) ? " · logged before" : ""}</div></div><span class="muted" style="font-size:22px">＋</span></button>`).join("") : `<div class="empty">No match in the list.</div>`;
+          list.sort((a, b) => (useCount.get(exKey(b.name)) || 0) - (useCount.get(exKey(a.name)) || 0));
+          html = list.length ? list.map(item).join("") : `<div class="empty">No match in the list.</div>`;
+        } else {
+          if (cat === "All"){
+            if (recent.length) html += `<div class="mon">Recent</div>` + recent.map(item).join("");
+            if (most.length) html += `<div class="mon">Most used</div>` + most.map(item).join("");
+          }
+          (cat === "All" ? CATS : [cat]).forEach(c => { const xs = list.filter(x => x.cat === c); if (xs.length) html += `<div class="mon">${esc(c)}</div>` + xs.map(item).join(""); });
+        }
+        $("#exList", b).innerHTML = html;
         const exact = q && allExercises().some(x => exKey(x.name) === k);
         $("#exNew", b).innerHTML = q.trim() && !exact ? `<div class="card" style="margin:6px 0 12px"><h3>Create “${esc(q.trim())}”</h3>
           <div class="row" style="margin-bottom:10px"><select class="inp grow" id="newCat">${CATS.map(c => `<option${c === "Other" ? " selected" : ""}>${c}</option>`).join("")}</select>
           <select class="inp" id="newType" style="width:auto"><option value="wr">Weight × reps</option><option value="t">Timed</option></select></div>
           <button class="btn primary" id="newGo">＋ Create custom exercise</button></div>` : "";
+        drawFoot();
+      };
+      const drawFoot = () => {
+        const go = $("#exAddGo", m);
+        go.textContent = sel.length ? `Add ${sel.length} exercise${sel.length > 1 ? "s" : ""}` : "Tap exercises to select";
+        go.disabled = !sel.length; go.style.opacity = sel.length ? 1 : .45;
+        $("#exClear", m).style.visibility = sel.length ? "visible" : "hidden";
+      };
+      const refreshItems = () => $$("[data-n]", b).forEach(el => { const x = allExercises().find(y => y.name === el.dataset.n); if (x){ const t = document.createElement("div"); t.innerHTML = item(x); el.replaceWith(t.firstElementChild); } });
+      const commit = libs => {
+        if (single){
+          const lib = libs[0], ex = ed.w.ex[replaceIdx]; ex.name = lib.name; ex.cat = lib.cat; ex.type = lib.type; ex.warn = null;
+          if (ed.mode === "live") save(); closeSheet(r.m); renderEditor(ed); toast(`Replaced with ${lib.name}`); return;
+        }
+        const have = new Set(ed.w.ex.map(e => exKey(e.name)));
+        const add = libs.filter(l => { const k = exKey(l.name); if (have.has(k)) return false; have.add(k); return true; });
+        add.forEach(l => ed.w.ex.push(exFromLib(l, ed.w)));
+        if (ed.mode === "live") save();
+        closeSheet(r.m); renderEditor(ed);
+        if (add.length && ed.scroller){ const first = ed.w.ex.length - add.length; setTimeout(() => $(`.ex[data-ei="${first}"]`, ed.el)?.scrollIntoView({behavior: "smooth", block: "start"}), 50); }
+        toast(add.length === 1 ? `Added ${add[0].name}` : `Added ${add.length} exercises`);
       };
       draw();
-      const qi = $("#exQ", b); setTimeout(() => qi.focus(), 50);
+      const qi = $("#exQ", b);
       qi.addEventListener("input", () => { q = qi.value; draw(); });
+      foot.addEventListener("click", e => {
+        if (e.target.closest("#exClear")){ sel.length = 0; refreshItems(); drawFoot(); return; }
+        if (e.target.closest("#exAddGo") && sel.length) commit(sel.map(n => allExercises().find(x => x.name === n) || byKey(exKey(n))).filter(Boolean));
+      });
       b.addEventListener("click", e => {
         const c = e.target.closest("[data-c]");
         if (c){ cat = c.dataset.c; $$("#exCats .chip", b).forEach(x => x.classList.toggle("on", x === c)); return draw(); }
-        let lib = null;
-        if (e.target.closest("#newGo")){ const nm = q.trim().replace(/\s+/g, " "); const name = nm.charAt(0).toUpperCase() + nm.slice(1); S.customEx.push({name, cat: $("#newCat", b).value, type: $("#newType", b).value}); buildLib(); save(); lib = matchEx(name); }
-        const it = e.target.closest("[data-n]"); if (it) lib = allExercises().find(x => x.name === it.dataset.n);
-        if (!lib) return;
-        if (replaceIdx != null){
-          const ex = ed.w.ex[replaceIdx]; ex.name = lib.name; ex.cat = lib.cat; ex.type = lib.type; ex.warn = null;
-        } else ed.w.ex.push(exFromLib(lib, ed.w));
-        if (ed.mode === "live") save(); else ;
-        closeSheet(r.m); renderEditor(ed);
-        if (replaceIdx == null && ed.scroller) setTimeout(() => { const cards = $$(".ex", ed.el); cards[cards.length - 1]?.scrollIntoView({behavior: "smooth", block: "center"}); }, 50);
-        toast(`Added ${lib.name}`);
+        if (e.target.closest("#newGo")){
+          const nm = q.trim().replace(/\s+/g, " "), name = nm.charAt(0).toUpperCase() + nm.slice(1);
+          S.customEx.push({name, cat: $("#newCat", b).value, type: $("#newType", b).value}); buildLib(); save();
+          const lib = matchEx(name);
+          if (single) return commit([lib]);
+          if (!sel.includes(lib.name)) sel.push(lib.name);
+          q = ""; qi.value = ""; draw(); toast(`Created ${lib.name}, selected`); return;
+        }
+        const it = e.target.closest("[data-n]"); if (!it) return;
+        const name = it.dataset.n;
+        if (it.classList.contains("added")) return toast("Already in this workout");
+        if (single) return commit([allExercises().find(x => x.name === name) || byKey(exKey(name))]);
+        const i = sel.indexOf(name); if (i >= 0) sel.splice(i, 1); else { sel.push(name); buzz(15); }
+        refreshItems(); drawFoot();
       });
     }});
 }
@@ -1051,21 +1176,31 @@ function pasteSheet(ed){
 function finishSheet(){
   const w = S.active; if (!w) return;
   const unchecked = w.ex.reduce((a, ex) => a + ex.sets.filter(s => !s.done && (ex.type === "t" ? s.t : s.r)).length, 0);
-  const done = workoutSets(w);
+  const done = workoutSets(w), past = !!w.past;
+  const elapsed = Math.max(1, Math.round((Date.now() - w.start) / 60000));
+  const dur0 = past ? (durMin(w) || 60) : elapsed;
   const r = openSheet({title: "Finish workout", body: `
-    <div class="stats" style="margin-bottom:14px"><div class="stat"><b>${fmtDur(Date.now() - w.start)}</b><span>Duration</span></div><div class="stat"><b id="fsSets">${done}</b><span>Sets done</span></div><div class="stat"><b>${fmtVol(workoutVolume(w))}</b><span>Volume ${wUnit()}</span></div></div>
-    ${unchecked ? `<label class="toggle"><span><b>Count ${unchecked} unchecked set${unchecked > 1 ? "s" : ""}</b><br><span class="small muted">They have numbers filled in but weren't ticked</span></span><span class="switch"><input type="checkbox" id="fsCount"><span></span></span></label>` : ""}
+    <div class="stats" style="margin-bottom:14px"><div class="stat"><b id="fsSets">${past ? done + unchecked : done}</b><span>Sets ${past ? "logged" : "done"}</span></div><div class="stat"><b>${fmtVol(past ? w.ex.reduce((a, ex) => a + (ex.type === "t" ? 0 : ex.sets.filter(s => s.done || s.r).reduce((b2, s) => b2 + (s.w || 0) * (s.r || 0), 0)), 0) : workoutVolume(w))}</b><span>Volume ${wUnit()}</span></div><div class="stat"><b>${fmtDate(w.date)}</b><span>${past ? fmtTime(w.start) : "Date"}</span></div></div>
+    <div class="field"><label for="fsDur">Duration (min)</label><div class="row"><input class="inp" id="fsDur" inputmode="numeric" value="${dur0}" style="width:84px;text-align:center;font-weight:800">
+      <div class="chips" style="padding:0;flex:1">${DUR_CHIPS.map(m => `<button type="button" class="chip" data-fd="${m}">${m}</button>`).join("")}</div></div>
+      <span class="small muted">${past ? "Change it if the session ran longer or shorter." : `Clock says ${elapsed} min. Change it if you logged after training.`}</span></div>
+    ${unchecked && !past ? `<label class="toggle"><span><b>Count ${unchecked} unchecked set${unchecked > 1 ? "s" : ""}</b><br><span class="small muted">They have numbers filled in but weren't ticked</span></span><span class="switch"><input type="checkbox" id="fsCount"><span></span></span></label>` : ""}
+    ${unchecked && past ? `<p class="small muted" style="margin-bottom:6px">All sets with numbers filled in will be saved. Empty sets are dropped.</p>` : ""}
     <label class="toggle"><span><b>Save as template</b><br><span class="small muted">Reuse this workout later from Today</span></span><span class="switch"><input type="checkbox" id="fsTpl"><span></span></span></label>
     <input class="inp" id="fsTplName" value="${esc(w.title)}" hidden style="margin-bottom:10px" aria-label="Template name">
     <button class="btn good" id="fsGo" style="margin-top:8px">✓ Save workout</button>`,
     onMount: b => {
       const tp = $("#fsTpl", b); tp.onchange = () => $("#fsTplName", b).hidden = !tp.checked;
+      b.addEventListener("click", e => { const c = e.target.closest("[data-fd]"); if (c) $("#fsDur", b).value = c.dataset.fd; });
       $("#fsGo", b).onclick = () => {
-        const countAll = $("#fsCount", b)?.checked;
+        const countAll = past || $("#fsCount", b)?.checked;
+        const dur = Math.max(1, Math.min(600, Math.round(num($("#fsDur", b).value) || dur0)));
         w.ex.forEach(ex => { if (countAll) ex.sets.forEach(s => { if (!s.done && (ex.type === "t" ? s.t : s.r)) s.done = true; }); ex.sets = ex.sets.filter(s => s.done); delete ex._showNote; delete ex.warn; });
         w.ex = w.ex.filter(ex => ex.sets.length);
         if (!w.ex.length){ toast("Nothing logged yet. Tick at least one set."); return; }
-        w.end = Date.now();
+        if (past) w.end = w.start + dur * 60000;
+        else { w.end = Date.now(); if (dur !== elapsed) w.start = w.end - dur * 60000; }
+        S.settings.lastDuration = dur;
         if (tp.checked){ S.templates.push(workoutToTemplate(w, $("#fsTplName", b).value.trim() || w.title)); }
         const prs = prMap(w);
         S.workouts.push(w); S.active = null; save();
@@ -1109,7 +1244,8 @@ function renderToday(){
     if (!ED.live || ED.live.w !== S.active){ body.innerHTML = `<div id="liveEd"></div>`; ED.live = {w: S.active, mode: "live", el: $("#liveEd"), scroller: $("#todayScroll")}; }
     if (!body.contains(ED.live.el)){ body.innerHTML = ""; body.appendChild(ED.live.el); }
     renderEditor(ED.live);
-    $("#hdrSub").textContent = `Logging · ${fmtDate(S.active.date, true)}`;
+    $("#hdrSub").textContent = `${S.active.past ? "Past workout" : "Logging"} · ${fmtDate(S.active.date, true)}`;
+    tickHeader();
     return;
   }
   ED.live = null;
@@ -1119,17 +1255,21 @@ function renderToday(){
   const recent = finished().reverse().slice(0, 4);
   body.innerHTML = `
     <h2 class="title">${doneToday ? "Nice work today 💪" : isTrain ? "Lifting day 🏋️" : "Rest day"}</h2>
-    <p class="sub">${doneToday ? "Today's session is logged. Check Progress to see how it stacks up." : isTrain ? "Paste what your coach sent and start logging." : "Recover well. You can still log a session any time."}</p>
+    <p class="sub">${doneToday ? "Today's session is logged. Check Progress to see how it stacks up." : isTrain ? "Start a workout and pick your exercises, or repeat your last one." : "Recover well. You can still log a session any time."}</p>
     ${weekCardHTML()}
     ${habitsSummaryHTML()}
     <div class="stack" style="margin-bottom:14px">
-      <button class="btn primary" id="tPaste">📋 Paste coach's workout</button>
-      <button class="btn" id="tEmpty">＋ Start empty workout</button>
+      <div class="btn-row"><button class="btn primary" id="tEmpty">＋ Start workout</button><button class="btn" id="tPast" style="border-color:rgba(255,107,61,.5)">🕘 Log past workout</button></div>
+      ${recent.length ? `<button class="btn" data-rep="${recent[0].id}" id="tRepeatLast">🔁 Repeat last workout <span class="small muted" style="font-weight:600">· ${esc(recent[0].title)}, ${fmtDate(recent[0].date)}</span></button>` : ""}
+      ${S.templates.length ? `<button class="btn" id="tTpl">⭐ Start from a template (${S.templates.length})</button>` : ""}
+      <button class="btn ghost" id="tPaste" style="min-height:44px;font-size:14px;color:var(--muted)">📋 Paste a workout from text</button>
     </div>
-    ${S.templates.length ? `<div class="card"><h3>Templates <span class="small muted">${S.templates.length}</span></h3>${S.templates.map(t => `<button class="list-item" data-tpl="${t.id}"><div class="grow"><div class="nm">${esc(t.name)}</div><div class="ds">${t.ex.length} exercises · ${esc(t.ex.slice(0, 3).map(x => x.name).join(", "))}${t.ex.length > 3 ? "…" : ""}</div></div><span class="tag acc">Start</span></button>`).join("")}</div>` : ""}
+    ${S.templates.length ? `<div class="card" id="tplCard"><h3>Templates <span class="small muted">${S.templates.length}</span></h3>${S.templates.map(t => `<button class="list-item" data-tpl="${t.id}"><div class="grow"><div class="nm">${esc(t.name)}</div><div class="ds">${t.ex.length} exercises · ${esc(t.ex.slice(0, 3).map(x => x.name).join(", "))}${t.ex.length > 3 ? "…" : ""}</div></div><span class="tag acc">Start</span></button>`).join("")}</div>` : ""}
     ${recent.length ? `<div class="card"><h3>Repeat a recent workout</h3>${recent.map(w => `<button class="list-item" data-rep="${w.id}"><div class="grow"><div class="nm">${esc(w.title)}</div><div class="ds">${fmtDate(w.date)} · ${w.ex.length} exercises · ${workoutSets(w)} sets</div></div><span class="tag">Repeat</span></button>`).join("")}</div>` : ""}
-    ${!S.workouts.length ? `<div class="card"><h3>How it works</h3><p class="small muted" style="line-height:1.55">1. Paste your coach's workout (or add exercises).<br>2. Tap ✓ after each set. The rest timer starts on its own.<br>3. Next time, you'll see what you lifted last time and get a 🏆 when you beat it.<br><br>Your data stays on this phone. Back it up from <b>Me → Export</b> now and then.</p></div>` : ""}`;
+    ${!S.workouts.length ? `<div class="card"><h3>How it works</h3><p class="small muted" style="line-height:1.55">1. Tap Start workout and pick your exercises (tap several, then Add).<br>2. Tap ✓ after each set. The rest timer starts on its own.<br>3. Next time, you'll see what you lifted last time and get a 🏆 when you beat it.<br><br>Your data stays on this phone. Back it up from <b>Me → Export</b> now and then.</p></div>` : ""}`;
   $("#tPaste").onclick = () => pasteSheet(null);
+  $("#tPast").onclick = pastSheet;
+  if ($("#tTpl")) $("#tTpl").onclick = () => $("#tplCard").scrollIntoView({behavior: "smooth", block: "start"});
   if ($("#hSum")) $("#hSum").onclick = () => showView("habits");
   $("#tEmpty").onclick = () => startWorkout(newWorkout()).then(ok => ok && addExerciseSheet(ED.live));
   body.onclick = e => {
@@ -1139,7 +1279,8 @@ function renderToday(){
 }
 function tickHeader(){
   const c = $("#hdrChip");
-  if (S.active){ const s = Math.floor((Date.now() - S.active.start) / 1000); c.textContent = `⏱ ${Math.floor(s / 60)}:${pad(s % 60)}`; }
+  if (S.active && S.active.past){ c.textContent = `🕘 ${durMin(S.active) || "–"} min`; }
+  else if (S.active){ const s = Math.floor((Date.now() - S.active.start) / 1000); c.textContent = `⏱ ${Math.floor(s / 60)}:${pad(s % 60)}`; }
   else { const si = streakInfo(); c.textContent = `${si.thisWeek}/${si.target} this week`; }
 }
 
@@ -1164,7 +1305,7 @@ function workoutDetail(id){
   const w = S.workouts.find(x => x.id === id); if (!w) return;
   const prs = prMap(w);
   const r = openSheet({title: esc(w.title), full: true, body: `
-    <p class="sub" style="margin:0 0 12px">${fmtDate(w.date, true)}${w.end ? ` · ${fmtDur(w.end - w.start)}` : ""}</p>
+    <p class="sub" style="margin:0 0 12px">${fmtDate(w.date, true)}${w.start ? ` · ${fmtTime(w.start)}` : ""}${w.end ? ` · ${fmtDur(w.end - w.start)}` : ""}</p>
     <div class="stats" style="margin-bottom:12px"><div class="stat"><b>${w.ex.length}</b><span>Exercises</span></div><div class="stat"><b>${workoutSets(w)}</b><span>Sets</span></div><div class="stat"><b>${fmtVol(workoutVolume(w))}</b><span>Volume ${wUnit()}</span></div></div>
     ${w.notes ? `<div class="card"><div class="lbl">Notes</div><div style="margin-top:6px;white-space:pre-wrap;line-height:1.45">${esc(w.notes)}</div></div>` : ""}
     ${w.ex.map((ex, i) => `<div class="card"><h3><span>${esc(ex.name)}</span>${prs[i] != null ? `<span class="tag pr">🏆 PR</span>` : ""}</h3>
@@ -1195,7 +1336,8 @@ function editWorkout(id){
       const ed = {w: copy, mode: "edit", el: $("#edBody", b), scroller: b};
       renderEditor(ed);
       $("#edSave", m).onclick = () => {
-        copy.ex.forEach(ex => { delete ex._showNote; delete ex.warn; });
+        const tf = $(".tf", b); if (tf) applyTimeFields(tf, copy);
+        copy.ex.forEach(ex => { ex.sets.forEach(s => { if (!s.done && (ex.type === "t" ? s.t : s.r)) s.done = true; }); ex.sets = ex.sets.filter(s => s.done); delete ex._showNote; delete ex.warn; });
         copy.ex = copy.ex.filter(ex => ex.sets.length);
         const i = S.workouts.findIndex(x => x.id === id); S.workouts[i] = copy; save();
         closeSheet(r.m); renderHistory(); toast("Workout updated");
@@ -1709,7 +1851,7 @@ let resizeT; window.addEventListener("resize", () => { clearTimeout(resizeT); re
 
 load(); buildLib(); renderAll();
 if (S.restEnd){ if (S.restEnd > Date.now()){ $("#rest").classList.add("show"); tickRest(); } else { S.restEnd = null; save(); } }
-setInterval(() => { tickRest(); if (S.active) tickHeader(); }, 250);
+setInterval(() => { tickRest(); if (S.active && !S.active.past) tickHeader(); }, 250);
 wakeOn();
 
 /* offline / install (only over http(s); harmless when opened as a file) */

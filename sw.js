@@ -1,6 +1,6 @@
 /* Lift Log service worker: offline support.
    Bump VERSION whenever index.html or the assets change so phones pick up the update. */
-const VERSION = "lift-log-v2";
+const VERSION = "lift-log-v3";
 const CORE = ["./", "./index.html", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png",
   "./icons/apple-touch-icon.png", "./icons/favicon-32.png"];
